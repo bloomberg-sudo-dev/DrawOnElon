@@ -1,6 +1,3 @@
-Here’s your simplified and cleaned-up version of the README in markdown (`.md`) format, keeping the top section intact while streamlining the rest:
-
-````md
 <div align="center">
 
 # 🚀 DrawOnElon.xyz 🎨  
