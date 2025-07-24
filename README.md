@@ -16,6 +16,8 @@
 *Click, Draw, Share, Repeat!* 🔄  
 **A progressive clicking game where your perseverance unlocks the power to create digital art on Elon Musk's iconic face!**
 
+<img width="1919" height="1079" alt="image (12)" src="https://github.com/user-attachments/assets/ba24b5dc-efa6-43ad-82a8-18d5f53bd20b" />
+
 </div>
 
 ---
