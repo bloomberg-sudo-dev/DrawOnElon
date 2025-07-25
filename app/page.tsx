@@ -1,31 +1,33 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface DrawingStroke {
-  points: { x: number; y: number }[]
-  color: string
-  thickness: number
+  points: { x: number; y: number }[];
+  color: string;
+  thickness: number;
 }
 
 export default function ElonMuskGame() {
-  const [clickCount, setClickCount] = useState(0)
-  const [currentRound, setCurrentRound] = useState(1)
-  const [showCanvas, setShowCanvas] = useState(false)
-  const [isDrawing, setIsDrawing] = useState(false)
-  const [currentColor, setCurrentColor] = useState("#FF6B9D")
-  const [allStrokes, setAllStrokes] = useState<DrawingStroke[]>([]) // All strokes across all rounds
-  const [currentSessionStrokes, setCurrentSessionStrokes] = useState(0) // Strokes in current drawing session
-  const [currentStroke, setCurrentStroke] = useState<{ x: number; y: number }[]>([])
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 })
-  const [showCustomCursor, setShowCustomCursor] = useState(false)
+  const [clickCount, setClickCount] = useState(0);
+  const [currentRound, setCurrentRound] = useState(1);
+  const [showCanvas, setShowCanvas] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [currentColor, setCurrentColor] = useState("#FF6B9D");
+  const [allStrokes, setAllStrokes] = useState<DrawingStroke[]>([]); // All strokes across all rounds
+  const [currentSessionStrokes, setCurrentSessionStrokes] = useState(0); // Strokes in current drawing session
+  const [currentStroke, setCurrentStroke] = useState<
+    { x: number; y: number }[]
+  >([]);
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [showCustomCursor, setShowCustomCursor] = useState(false);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const elonImageRef = useRef<HTMLImageElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const elonImageRef = useRef<HTMLImageElement>(null);
 
   // Replace the colors array with basic color swatches
   const basicColors = [
@@ -53,88 +55,94 @@ export default function ElonMuskGame() {
     "#A9A9A9",
     "#DC143C",
     "#FF69B4",
-  ]
+  ];
 
   // Add new state for hue and slider
-  const [currentHue, setCurrentHue] = useState(340) // Pink hue
-  const [brushSize, setBrushSize] = useState(5)
+  const [currentHue, setCurrentHue] = useState(340); // Pink hue
+  const [brushSize, setBrushSize] = useState(5);
 
   // Helper function to convert HSL to hex
   const hslToHex = (h: number, s: number, l: number) => {
-    l /= 100
-    const a = (s * Math.min(l, 1 - l)) / 100
+    l /= 100;
+    const a = (s * Math.min(l, 1 - l)) / 100;
     const f = (n: number) => {
-      const k = (n + h / 30) % 12
-      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1)
+      const k = (n + h / 30) % 12;
+      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
       return Math.round(255 * color)
         .toString(16)
-        .padStart(2, "0")
-    }
-    return `#${f(0)}${f(8)}${f(4)}`
-  }
+        .padStart(2, "0");
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+  };
 
   const thicknesses = [
     { name: "Thin", value: 2 },
     { name: "Medium", value: 5 },
     { name: "Thick", value: 10 },
-  ]
+  ];
 
   // Calculate required clicks for current round (10, 20, 40, 80, etc.)
-  const getRequiredClicks = (round: number) => 10 * Math.pow(2, round - 1)
-  const requiredClicks = getRequiredClicks(currentRound)
+  const getRequiredClicks = (round: number) => 10 * Math.pow(2, round - 1);
+  const requiredClicks = getRequiredClicks(currentRound);
 
   const handleElonClick = () => {
-    if (showCanvas) return // Don't allow clicking while in drawing mode
+    if (showCanvas) return; // Don't allow clicking while in drawing mode
 
     setClickCount((prev) => {
-      const newCount = prev + 1
+      const newCount = prev + 1;
       if (newCount >= requiredClicks) {
-        setShowCanvas(true)
-        setCurrentSessionStrokes(0) // Reset stroke counter for new session
+        setShowCanvas(true);
+        setCurrentSessionStrokes(0); // Reset stroke counter for new session
       }
-      return newCount
-    })
-  }
+      return newCount;
+    });
+  };
 
-  const getCanvasCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current
-    if (!canvas) return { x: 0, y: 0 }
+  const getCanvasCoordinates = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
 
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
 
-    let clientX, clientY
+    let clientX, clientY;
     if ("touches" in e) {
-      clientX = e.touches[0].clientX
-      clientY = e.touches[0].clientY
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
     } else {
-      clientX = e.clientX
-      clientY = e.clientY
+      clientX = e.clientX;
+      clientY = e.clientY;
     }
 
     return {
       x: (clientX - rect.left) * scaleX,
       y: (clientY - rect.top) * scaleY,
-    }
-  }
+    };
+  };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault()
-    if (currentSessionStrokes >= 5) return // Max strokes reached
+  const startDrawing = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    e.preventDefault();
+    if (currentSessionStrokes >= 5) return; // Max strokes reached
 
-    setIsDrawing(true)
-    const coords = getCanvasCoordinates(e)
-    setCurrentStroke([coords])
-  }
+    setIsDrawing(true);
+    const coords = getCanvasCoordinates(e);
+    setCurrentStroke([coords]);
+  };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault()
-    if (!isDrawing || currentSessionStrokes >= 5) return
+  const draw = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    e.preventDefault();
+    if (!isDrawing || currentSessionStrokes >= 5) return;
 
-    const coords = getCanvasCoordinates(e)
-    setCurrentStroke((prev) => [...prev, coords])
-  }
+    const coords = getCanvasCoordinates(e);
+    setCurrentStroke((prev) => [...prev, coords]);
+  };
 
   const stopDrawing = () => {
     if (isDrawing && currentStroke.length > 0 && currentSessionStrokes < 5) {
@@ -142,257 +150,267 @@ export default function ElonMuskGame() {
         points: currentStroke,
         color: currentColor,
         thickness: brushSize,
-      }
+      };
 
-      setAllStrokes((prev) => [...prev, newStroke])
+      setAllStrokes((prev) => [...prev, newStroke]);
       setCurrentSessionStrokes((prev) => {
-        const newCount = prev + 1
+        const newCount = prev + 1;
         if (newCount >= 5) {
           // End drawing session, return to clicking mode
           setTimeout(() => {
-            setShowCanvas(false)
-            setClickCount(0) // Reset click count
-            setCurrentRound((round) => round + 1) // Advance to next round
-          }, 1000) // Small delay to show the completed stroke
+            setShowCanvas(false);
+            setClickCount(0); // Reset click count
+            setCurrentRound((round) => round + 1); // Advance to next round
+          }, 1000); // Small delay to show the completed stroke
         }
-        return newCount
-      })
-      setCurrentStroke([])
+        return newCount;
+      });
+      setCurrentStroke([]);
     }
-    setIsDrawing(false)
-  }
+    setIsDrawing(false);
+  };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!showCanvas) return
+    if (!showCanvas) return;
 
-    const canvas = canvasRef.current
-    if (!canvas) return
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect()
+    const rect = canvas.getBoundingClientRect();
     setCursorPosition({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
-    })
+    });
 
     // Continue with existing draw logic if drawing
     if (isDrawing) {
-      draw(e)
+      draw(e);
     }
-  }
+  };
 
   const handleMouseEnter = () => {
-    setShowCustomCursor(true)
-  }
+    setShowCustomCursor(true);
+  };
 
   const handleMouseLeave = () => {
-    setShowCustomCursor(false)
-    stopDrawing()
-  }
+    setShowCustomCursor(false);
+    stopDrawing();
+  };
 
   const clearCanvas = () => {
-    setAllStrokes([])
-    setCurrentStroke([])
-    setCurrentSessionStrokes(0)
-    redrawCanvas()
-  }
+    setAllStrokes([]);
+    setCurrentStroke([]);
+    setCurrentSessionStrokes(0);
+    redrawCanvas();
+  };
 
   const undoLastStroke = () => {
     if (currentSessionStrokes > 0) {
-      setAllStrokes((prev) => prev.slice(0, -1))
-      setCurrentSessionStrokes((prev) => prev - 1)
+      setAllStrokes((prev) => prev.slice(0, -1));
+      setCurrentSessionStrokes((prev) => prev - 1);
     }
-  }
+  };
 
   const redrawCanvas = () => {
-    const canvas = canvasRef.current
-    const ctx = canvas?.getContext("2d")
-    const elonImage = elonImageRef.current
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    const elonImage = elonImageRef.current;
 
-    if (!canvas || !ctx || !elonImage) return
+    if (!canvas || !ctx || !elonImage) return;
 
     // Clear canvas and set proper dimensions
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw Elon image to fill the square canvas properly
-    ctx.drawImage(elonImage, 0, 0, canvas.width, canvas.height)
+    ctx.drawImage(elonImage, 0, 0, canvas.width, canvas.height);
 
     // Draw all strokes from all sessions
     allStrokes.forEach((stroke) => {
-      if (stroke.points.length < 2) return
+      if (stroke.points.length < 2) return;
 
-      ctx.beginPath()
-      ctx.strokeStyle = stroke.color
-      ctx.lineWidth = stroke.thickness
-      ctx.lineCap = "round"
-      ctx.lineJoin = "round"
+      ctx.beginPath();
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = stroke.thickness;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
 
-      ctx.moveTo(stroke.points[0].x, stroke.points[0].y)
+      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
       for (let i = 1; i < stroke.points.length; i++) {
-        ctx.lineTo(stroke.points[i].x, stroke.points[i].y)
+        ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
       }
-      ctx.stroke()
-    })
+      ctx.stroke();
+    });
 
     // Draw current stroke
     if (currentStroke.length > 1) {
-      ctx.beginPath()
-      ctx.strokeStyle = currentColor
-      ctx.lineWidth = brushSize
-      ctx.lineCap = "round"
-      ctx.lineJoin = "round"
+      ctx.beginPath();
+      ctx.strokeStyle = currentColor;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
 
-      ctx.moveTo(currentStroke[0].x, currentStroke[0].y)
+      ctx.moveTo(currentStroke[0].x, currentStroke[0].y);
       for (let i = 1; i < currentStroke.length; i++) {
-        ctx.lineTo(currentStroke[i].x, currentStroke[i].y)
+        ctx.lineTo(currentStroke[i].x, currentStroke[i].y);
       }
-      ctx.stroke()
+      ctx.stroke();
     }
-  }
+  };
 
   // Create a composite image for clicking mode (Elon + all drawings)
   const createCompositeImage = () => {
-    const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")
-    const elonImage = elonImageRef.current
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const elonImage = elonImageRef.current;
 
-    if (!ctx || !elonImage) return null
+    if (!ctx || !elonImage) return null;
 
-    canvas.width = 500
-    canvas.height = 500
+    canvas.width = 500;
+    canvas.height = 500;
 
     // Ensure the image fills the square canvas properly
-    ctx.drawImage(elonImage, 0, 0, 500, 500)
+    ctx.drawImage(elonImage, 0, 0, 500, 500);
 
     // Draw all existing strokes
     allStrokes.forEach((stroke) => {
-      if (stroke.points.length < 2) return
+      if (stroke.points.length < 2) return;
 
-      ctx.beginPath()
-      ctx.strokeStyle = stroke.color
-      ctx.lineWidth = stroke.thickness
-      ctx.lineCap = "round"
-      ctx.lineJoin = "round"
+      ctx.beginPath();
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = stroke.thickness;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
 
-      ctx.moveTo(stroke.points[0].x, stroke.points[0].y)
+      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
       for (let i = 1; i < stroke.points.length; i++) {
-        ctx.lineTo(stroke.points[i].x, stroke.points[i].y)
+        ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
       }
-      ctx.stroke()
-    })
+      ctx.stroke();
+    });
 
-    return canvas.toDataURL()
-  }
+    return canvas.toDataURL();
+  };
 
   // Export function for downloading/sharing
   const exportArtwork = () => {
-    const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")
-    const elonImage = elonImageRef.current
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const elonImage = elonImageRef.current;
 
-    if (!ctx || !elonImage) return null
+    if (!ctx || !elonImage) return null;
 
-    canvas.width = 500
-    canvas.height = 500
+    canvas.width = 500;
+    canvas.height = 500;
 
     // Draw Elon image
-    ctx.drawImage(elonImage, 0, 0, 500, 500)
+    ctx.drawImage(elonImage, 0, 0, 500, 500);
 
     // Draw all existing strokes
     allStrokes.forEach((stroke) => {
-      if (stroke.points.length < 2) return
+      if (stroke.points.length < 2) return;
 
-      ctx.beginPath()
-      ctx.strokeStyle = stroke.color
-      ctx.lineWidth = stroke.thickness
-      ctx.lineCap = "round"
-      ctx.lineJoin = "round"
+      ctx.beginPath();
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = stroke.thickness;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
 
-      ctx.moveTo(stroke.points[0].x, stroke.points[0].y)
+      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
       for (let i = 1; i < stroke.points.length; i++) {
-        ctx.lineTo(stroke.points[i].x, stroke.points[i].y)
+        ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
       }
-      ctx.stroke()
-    })
+      ctx.stroke();
+    });
 
-    return canvas.toDataURL("image/png")
-  }
+    return canvas.toDataURL("image/png");
+  };
 
   const downloadArtwork = () => {
-    const dataUrl = exportArtwork()
-    if (!dataUrl) return
+    const dataUrl = exportArtwork();
+    if (!dataUrl) return;
 
-    const link = document.createElement("a")
-    link.download = `elon-masterpiece-round-${currentRound}-${allStrokes.length}-strokes.png`
-    link.href = dataUrl
-    link.click()
-  }
+    const link = document.createElement("a");
+    link.download = `elon-masterpiece-round-${currentRound}-${allStrokes.length}-strokes.png`;
+    link.href = dataUrl;
+    link.click();
+  };
 
   const shareToTwitter = () => {
-    const text = `Check out my Elon Musk masterpiece! 🎨 Round ${currentRound} with ${allStrokes.length} strokes! 🚀 #ElonClickerGame #DigitalArt`
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`
-    window.open(url, "_blank")
-  }
+    const text = `Check out my Elon Musk masterpiece! 🎨 Round ${currentRound} with ${allStrokes.length} strokes! 🚀 #ElonClickerGame #DigitalArt`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      text
+    )}`;
+    window.open(url, "_blank");
+  };
 
   useEffect(() => {
     if (showCanvas) {
-      redrawCanvas()
+      redrawCanvas();
     }
-  }, [allStrokes, currentStroke, showCanvas, brushSize, currentColor])
+  }, [allStrokes, currentStroke, showCanvas, brushSize, currentColor]);
 
   useEffect(() => {
     const handleImageLoad = () => {
       if (showCanvas) {
-        redrawCanvas()
+        redrawCanvas();
       }
-    }
+    };
 
-    const elonImage = elonImageRef.current
+    const elonImage = elonImageRef.current;
     if (elonImage) {
       if (elonImage.complete) {
-        handleImageLoad()
+        handleImageLoad();
       } else {
-        elonImage.addEventListener("load", handleImageLoad)
-        return () => elonImage.removeEventListener("load", handleImageLoad)
+        elonImage.addEventListener("load", handleImageLoad);
+        return () => elonImage.removeEventListener("load", handleImageLoad);
       }
     }
-  }, [showCanvas])
+  }, [showCanvas]);
 
-  const compositeImageSrc = !showCanvas && allStrokes.length > 0 ? createCompositeImage() : null
+  const compositeImageSrc =
+    !showCanvas && allStrokes.length > 0 ? createCompositeImage() : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-pink-50 p-4 relative">
       {/* Top Right Action Buttons - Moved to page level */}
-      <div className="absolute top-4 right-4 flex gap-2 z-20">
-        <Button
-          onClick={downloadArtwork}
-          variant="outline"
-          size="sm"
-          className="bg-white/80 backdrop-blur-sm hover:bg-white/90 shadow-lg"
-          disabled={allStrokes.length === 0}
-        >
-          📥 Download
-        </Button>
-        <Button
-          onClick={shareToTwitter}
-          variant="outline"
-          size="sm"
-          className="bg-blue-500/80 text-white backdrop-blur-sm hover:bg-blue-600/90 border-blue-500 shadow-lg"
-          disabled={allStrokes.length === 0}
-        >
-          🐦 Tweet
-        </Button>
-      </div>
+      {/* Remove the old absolute button container */}
 
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4">🚀 DrawOnElon.xyz 🚀</h1>
-          {/* Remove the buttons from here since they're now at page level */}
-
+        <div className="relative mb-8 flex flex-col items-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-0 text-center w-full">
+            🚀 DrawOnElon.xyz 🚀
+          </h1>
+          {/* Buttons: centered below on mobile, absolutely right on large screens */}
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mt-4 lg:mt-0 lg:absolute lg:top-1/2 lg:right-0 lg:-translate-y-1/2">
+            <Button
+              onClick={downloadArtwork}
+              variant="outline"
+              size="sm"
+              className="bg-white/80 backdrop-blur-sm hover:bg-white/90 shadow-lg"
+              disabled={allStrokes.length === 0}
+            >
+              📥 Download
+            </Button>
+            <Button
+              onClick={shareToTwitter}
+              variant="outline"
+              size="sm"
+              className="bg-blue-500/80 text-white backdrop-blur-sm hover:bg-blue-600/90 border-blue-500 shadow-lg"
+              disabled={allStrokes.length === 0}
+            >
+              🐦 Tweet
+            </Button>
+          </div>
+        </div>
+        {/* Wrap the rest of the content in a fragment to ensure a single parent */}
+        <>
           {/* Game Stats */}
           <div className="flex flex-wrap justify-center gap-4 mb-4">
             <div className="bg-white/70 backdrop-blur-sm rounded-full px-4 py-2">
-              <span className="text-lg font-bold text-purple-600">Round: {currentRound}</span>
+              <span className="text-lg font-bold text-purple-600">
+                Round: {currentRound}
+              </span>
             </div>
             <div className="bg-white/70 backdrop-blur-sm rounded-full px-4 py-2">
               <span className="text-lg font-bold text-blue-600">
@@ -400,21 +418,27 @@ export default function ElonMuskGame() {
               </span>
             </div>
             <div className="bg-white/70 backdrop-blur-sm rounded-full px-4 py-2">
-              <span className="text-lg font-bold text-green-600">Total Strokes: {allStrokes.length}</span>
+              <span className="text-lg font-bold text-green-600">
+                Total Strokes: {allStrokes.length}
+              </span>
             </div>
           </div>
 
           {/* Status Messages */}
           {!showCanvas && clickCount < requiredClicks && (
-            <p className="text-lg text-gray-600">
-              Click Elon <strong>{requiredClicks - clickCount}</strong> more times to unlock drawing mode!
+            <p className="text-lg text-gray-600 text-center mb-8">
+              Click Elon <strong>{requiredClicks - clickCount}</strong> more
+              times to unlock drawing mode!
             </p>
           )}
           {showCanvas && (
             <div className="space-y-2">
-              <p className="text-lg text-green-600 font-semibold">🎨 Drawing mode unlocked! Draw on Elon's face!</p>
+              <p className="text-lg text-green-600 font-semibold">
+                🎨 Drawing mode unlocked! Draw on Elon's face!
+              </p>
               <p className="text-md text-orange-600">
-                Strokes remaining: <strong>{5 - currentSessionStrokes}</strong>/5
+                Strokes remaining: <strong>{5 - currentSessionStrokes}</strong>
+                /5
               </p>
               {currentSessionStrokes >= 5 && (
                 <p className="text-md text-red-600 font-semibold">
@@ -423,17 +447,21 @@ export default function ElonMuskGame() {
               )}
             </div>
           )}
-        </div>
+        </>
 
-        <div className="flex flex-col xl:flex-row gap-6 items-start justify-center max-w-7xl mx-auto">
+        <div className="flex flex-col xl:flex-row gap-6 items-center justify-center max-w-7xl mx-auto">
           {/* Left Panel - Color Picker & Brush Size */}
           {showCanvas && (
             <Card className="w-full xl:w-72 p-4 bg-white/80 backdrop-blur-sm order-2 xl:order-1">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">🎨 Color & Brush</h3>
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                🎨 Color & Brush
+              </h3>
 
               {/* Color Selection - Simplified Color Picker */}
               <div className="mb-6">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Color Picker</h4>
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                  Color Picker
+                </h4>
 
                 {/* Current Color Display */}
                 <div className="mb-3 p-3 bg-gray-50 rounded-lg">
@@ -442,13 +470,17 @@ export default function ElonMuskGame() {
                       className="w-8 h-8 rounded-full border-2 border-gray-300 shadow-sm"
                       style={{ backgroundColor: currentColor }}
                     />
-                    <span className="text-sm font-mono text-gray-600">{currentColor}</span>
+                    <span className="text-sm font-mono text-gray-600">
+                      {currentColor}
+                    </span>
                   </div>
                 </div>
 
                 {/* Hue Slider */}
                 <div className="mb-4">
-                  <label className="text-xs text-gray-600 mb-2 block">Hue</label>
+                  <label className="text-xs text-gray-600 mb-2 block">
+                    Hue
+                  </label>
                   <div className="relative">
                     <input
                       type="range"
@@ -456,9 +488,9 @@ export default function ElonMuskGame() {
                       max="360"
                       value={currentHue}
                       onChange={(e) => {
-                        const hue = Number.parseInt(e.target.value)
-                        setCurrentHue(hue)
-                        setCurrentColor(hslToHex(hue, 80, 60))
+                        const hue = Number.parseInt(e.target.value);
+                        setCurrentHue(hue);
+                        setCurrentColor(hslToHex(hue, 80, 60));
                       }}
                       className="w-full h-4 rounded-lg appearance-none cursor-pointer"
                       style={{
@@ -472,16 +504,26 @@ export default function ElonMuskGame() {
 
                 {/* Basic Colors Grid */}
                 <div className="mb-3">
-                  <label className="text-xs text-gray-600 mb-2 block">Basic Colors</label>
+                  <label className="text-xs text-gray-600 mb-2 block">
+                    Basic Colors
+                  </label>
                   <div className="grid grid-cols-6 gap-1">
                     {basicColors.map((color, index) => (
                       <button
                         key={index}
                         className={`w-7 h-7 rounded border-2 transition-all hover:scale-110 ${
-                          currentColor === color ? "border-gray-800 shadow-lg" : "border-gray-200"
-                        } ${currentSessionStrokes >= 5 ? "opacity-50 cursor-not-allowed" : ""}`}
+                          currentColor === color
+                            ? "border-gray-800 shadow-lg"
+                            : "border-gray-200"
+                        } ${
+                          currentSessionStrokes >= 5
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
                         style={{ backgroundColor: color }}
-                        onClick={() => currentSessionStrokes < 5 && setCurrentColor(color)}
+                        onClick={() =>
+                          currentSessionStrokes < 5 && setCurrentColor(color)
+                        }
                         disabled={currentSessionStrokes >= 5}
                       />
                     ))}
@@ -491,7 +533,9 @@ export default function ElonMuskGame() {
 
               {/* Brush Size Slider */}
               <div className="mb-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">🖌️ Brush Size</h4>
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                  🖌️ Brush Size
+                </h4>
                 <div className="space-y-3">
                   {/* Size Preview */}
                   <div className="flex items-center justify-center p-3 bg-gray-50 rounded-lg">
@@ -515,11 +559,15 @@ export default function ElonMuskGame() {
                       min="1"
                       max="20"
                       value={brushSize}
-                      onChange={(e) => setBrushSize(Number.parseInt(e.target.value))}
+                      onChange={(e) =>
+                        setBrushSize(Number.parseInt(e.target.value))
+                      }
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                       disabled={currentSessionStrokes >= 5}
                     />
-                    <div className="text-center text-xs text-gray-600">Size: {brushSize}px</div>
+                    <div className="text-center text-xs text-gray-600">
+                      Size: {brushSize}px
+                    </div>
                   </div>
                 </div>
               </div>
@@ -527,7 +575,7 @@ export default function ElonMuskGame() {
           )}
 
           {/* Center - Main Game Area */}
-          <div className="flex-1 max-w-2xl order-1 xl:order-2">
+          <div className="order-1 xl:order-2 flex justify-center items-center w-full">
             <div className="relative">
               {/* Hidden original image for canvas drawing */}
               <img
@@ -599,20 +647,30 @@ export default function ElonMuskGame() {
           {/* Right Panel - Session Progress & Actions */}
           {showCanvas && (
             <Card className="w-full xl:w-72 p-4 bg-white/80 backdrop-blur-sm order-3">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">📊 Session Info</h3>
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                📊 Session Info
+              </h3>
 
               {/* Session Progress */}
               <div className="mb-6 p-3 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
-                <div className="text-sm font-semibold text-gray-700 mb-2">Drawing Progress</div>
+                <div className="text-sm font-semibold text-gray-700 mb-2">
+                  Drawing Progress
+                </div>
                 <div className="flex gap-1 mb-2">
                   {[...Array(5)].map((_, i) => (
                     <div
                       key={i}
-                      className={`flex-1 h-3 rounded ${i < currentSessionStrokes ? "bg-green-500" : "bg-gray-300"}`}
+                      className={`flex-1 h-3 rounded ${
+                        i < currentSessionStrokes
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                      }`}
                     />
                   ))}
                 </div>
-                <div className="text-xs text-gray-600">{currentSessionStrokes}/5 strokes used</div>
+                <div className="text-xs text-gray-600">
+                  {currentSessionStrokes}/5 strokes used
+                </div>
                 {currentSessionStrokes >= 5 && (
                   <div className="text-xs text-red-600 font-semibold mt-1">
                     Session complete! Returning to clicking...
@@ -630,16 +688,23 @@ export default function ElonMuskGame() {
                 >
                   ↶ Undo Last Stroke
                 </Button>
-                <Button onClick={clearCanvas} variant="destructive" className="w-full">
+                <Button
+                  onClick={clearCanvas}
+                  variant="destructive"
+                  className="w-full"
+                >
                   🗑️ Clear All Drawings
                 </Button>
               </div>
 
               {/* Next Round Preview */}
               <div className="p-3 bg-blue-50 rounded-lg">
-                <div className="text-sm font-semibold text-blue-800 mb-1">Next Round</div>
+                <div className="text-sm font-semibold text-blue-800 mb-1">
+                  Next Round
+                </div>
                 <div className="text-xs text-blue-600 mb-2">
-                  Round {currentRound + 1}: {getRequiredClicks(currentRound + 1)} clicks required
+                  Round {currentRound + 1}:{" "}
+                  {getRequiredClicks(currentRound + 1)} clicks required
                 </div>
                 <div className="text-xs text-gray-600">
                   Total Strokes: <strong>{allStrokes.length}</strong>
@@ -659,7 +724,8 @@ export default function ElonMuskGame() {
               🖌️ Total Artwork: <strong>{allStrokes.length} strokes</strong>
             </span>
             <span className="text-sm text-gray-600">
-              🚀 Next Goal: <strong>{getRequiredClicks(currentRound + 1)} clicks</strong>
+              🚀 Next Goal:{" "}
+              <strong>{getRequiredClicks(currentRound + 1)} clicks</strong>
             </span>
           </div>
         </div>
@@ -673,21 +739,21 @@ export default function ElonMuskGame() {
           height: 20px;
           width: 20px;
           border-radius: 50%;
-          background: #4F46E5;
+          background: #4f46e5;
           cursor: pointer;
           border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         input[type="range"]::-moz-range-thumb {
           height: 20px;
           width: 20px;
           border-radius: 50%;
-          background: #4F46E5;
+          background: #4f46e5;
           cursor: pointer;
           border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
       `}</style>
     </div>
-  )
+  );
 }
